@@ -124,7 +124,7 @@ namespace wsteste.DAO{
             }
         }
 
-        public void pesquisarPessoa(string tabela, string nome="",string cpf="", string idade=""){
+        public void pesquisarPessoa(string tabela, string nome="%",string cpf="%", string idade="%"){
 
             
             try{                               
@@ -139,8 +139,10 @@ namespace wsteste.DAO{
                 comando1.Connection = conexao;
                 comando1.Transaction = transaction;
 
-                comando1.CommandText = $"select * from {tabela} where nome=@nome";
+                comando1.CommandText = $"select * from {tabela} where nome LIKE@nome and cpf LIKE @cpf and idade LIKE @idade";
                 comando1.Parameters.Add(new SqlParameter("@nome",nome));
+                comando1.Parameters.Add(new SqlParameter("@cpf",cpf));
+                comando1.Parameters.Add(new SqlParameter("@idade",idade));
 
                 SqlDataReader leitor = comando1.ExecuteReader(CommandBehavior.CloseConnection);
 
