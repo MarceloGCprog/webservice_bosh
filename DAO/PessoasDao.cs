@@ -34,7 +34,7 @@ namespace wsteste.DAO{
             System.Console.WriteLine("Conexao Fechada"); 
         }
 
-        public void AdicionarPessoa(string tabela,string nome, string cpf, int idade){                   
+        public void AdicionarPessoa(string tabela,string nome, string cpf, string idade){                   
                 
 
             try{
@@ -106,7 +106,7 @@ namespace wsteste.DAO{
                 if(leitor.HasRows){
                     while(leitor.Read()){
                 
-                        System.Console.WriteLine($"nome:"+ leitor["nome"],"cpf:"+ leitor["cpf"],"idade:"+ leitor["idade"]);
+                        System.Console.WriteLine($"nome:"+ leitor["nome"]+" cpf:"+ leitor["cpf"]+" idade:"+ leitor["idade"]);
                          
                 } 
                     leitor.Close();
@@ -135,11 +135,11 @@ namespace wsteste.DAO{
 
                 SqlCommand comando1 = conexao.CreateCommand();
                 SqlTransaction  transaction;
-                transaction = conexao.BeginTransaction("Selecionar Pessoa pelo Nome");
+                transaction = conexao.BeginTransaction("Selecionar Pessoa ");
                 comando1.Connection = conexao;
                 comando1.Transaction = transaction;
 
-                comando1.CommandText = $"select * from {tabela} where nome LIKE@nome and cpf LIKE @cpf and idade LIKE @idade";
+                comando1.CommandText = $"select * from {tabela} where nome LIKE @nome and cpf LIKE @cpf and idade LIKE @idade";
                 comando1.Parameters.Add(new SqlParameter("@nome",nome));
                 comando1.Parameters.Add(new SqlParameter("@cpf",cpf));
                 comando1.Parameters.Add(new SqlParameter("@idade",idade));
@@ -149,7 +149,7 @@ namespace wsteste.DAO{
                 if(leitor.HasRows){
                     while(leitor.Read()){
                 
-                        System.Console.WriteLine($"nome:"+ leitor["nome"],"cpf:"+ leitor["cpf"],"idade:"+ leitor["idade"]);
+                        System.Console.WriteLine($"nome:"+ leitor["nome"] +" cpf:"+ leitor["cpf"] +" idade:"+ leitor["idade"]);
                          
                 } 
                     leitor.Close();
@@ -167,6 +167,107 @@ namespace wsteste.DAO{
             }
         }
 
+         public void DeletarPessoa(string tabela, string cpf){                   
+                
+
+            try{
+               
+               
+                if (conexao.State != ConnectionState.Open){
+                    conexao.Close();
+                    conexao.Open();}
+
+                SqlCommand comando1 = conexao.CreateCommand();
+                SqlTransaction  transaction;
+                transaction = conexao.BeginTransaction("Deletar Pessoa");
+                comando1.Connection = conexao;
+                comando1.Transaction = transaction;
+
+                try{
+                    comando1.CommandText = $"Delete from {tabela} Where cpf= @cpf";        
+                    comando1.Parameters.Add(new SqlParameter("@cpf",cpf));                                     
+                    comando1.ExecuteNonQuery();
+                    
+
+                    transaction.Commit();            
+                    //System.Console.WriteLine("Pessoa inserida com sucesso.");
+                }catch (Exception ex)
+                {
+                    Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
+                    Console.WriteLine("  Message: {0}", ex.Message);
+
+            
+                    try
+                    {
+                     transaction.Rollback();
+                    }
+                    catch (Exception ex2)
+                    {
+                
+                    Console.WriteLine("Rollback Exception Type: {0}", ex2.GetType());
+                    Console.WriteLine("  Message: {0}", ex2.Message);
+                    }}                
+
+                
+
+            } catch(SqlException e){
+                System.Console.WriteLine("Instrucao não realizada" + e);
+            }
+
+        }
+
+        public void AlterarPessoa(string tabela,string novoNome, string novaIdade, string cpf){                   
+                
+
+            try{
+               
+               
+                if (conexao.State != ConnectionState.Open){
+                    conexao.Close();
+                    conexao.Open();}
+
+                SqlCommand comando1 = conexao.CreateCommand();
+                SqlTransaction  transaction;
+                transaction = conexao.BeginTransaction("Alterar Pessoa");
+                comando1.Connection = conexao;
+                comando1.Transaction = transaction;
+
+                try{
+                    comando1.CommandText = $"Update {tabela} Set nome= @novoNome, idade= @novaIdade  Where  cpf= @cpf";                  
+                    comando1.Parameters.Add(new SqlParameter("@cpf",cpf));
+                    comando1.Parameters.Add(new SqlParameter("@novoNome",novoNome));                    
+                    comando1.Parameters.Add(new SqlParameter("@novaIdade",novaIdade));                    
+                    comando1.ExecuteNonQuery();
+                    
+
+                    transaction.Commit();            
+                    //System.Console.WriteLine("Pessoa inserida com sucesso.");
+                }catch (Exception ex)
+                {
+                    Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
+                    Console.WriteLine("  Message: {0}", ex.Message);
+
+            
+                    try
+                    {
+                     transaction.Rollback();
+                    }
+                    catch (Exception ex2)
+                    {
+                
+                    Console.WriteLine("Rollback Exception Type: {0}", ex2.GetType());
+                    Console.WriteLine("  Message: {0}", ex2.Message);
+                    }}                
+
+                
+
+            } catch(SqlException e){
+                System.Console.WriteLine("Instrucao não realizada" + e);
+            }
+
+        }
+
+        
         
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++
