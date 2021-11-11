@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "qVeYqSu7QdjTFWjzXZifVsxsX1obO4uPQt8PF2Aa86bhQT2vZV4rrPnaP4WLy4iFqdag+1ZtCjOsliwssz5e3w==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\vilmar.abreu\\Drive\\Aulas\\Extensão\\Bosch\\workspace\\wstesteFull\\wsteste.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\vilmar.abreu\\.nuget\\packages\\microsoft.extensions.apidescription.server\\3.0.0\\microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
+    "C:\\Users\\vilmar.abreu\\.nuget\\packages\\microsoft.openapi\\1.1.4\\microsoft.openapi.1.1.4.nupkg.sha512",
+    "C:\\Users\\vilmar.abreu\\.nuget\\packages\\mysqlconnector\\1.0.0\\mysqlconnector.1.0.0.nupkg.sha512",
+    "C:\\Users\\vilmar.abreu\\.nuget\\packages\\swashbuckle.aspnetcore\\5.5.1\\swashbuckle.aspnetcore.5.5.1.nupkg.sha512",
+    "C:\\Users\\vilmar.abreu\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\5.5.1\\swashbuckle.aspnetcore.swagger.5.5.1.nupkg.sha512",
+    "C:\\Users\\vilmar.abreu\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\5.5.1\\swashbuckle.aspnetcore.swaggergen.5.5.1.nupkg.sha512",
+    "C:\\Users\\vilmar.abreu\\.nuget\\packages\\swashbuckle.aspnetcore.swaggerui\\5.5.1\\swashbuckle.aspnetcore.swaggerui.5.5.1.nupkg.sha512"
+  ],
+  "logs": []
+}
