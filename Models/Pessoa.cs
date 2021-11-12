@@ -6,13 +6,13 @@ namespace wsteste.Models
     {
         public string nome {get;set;}
         public string cpf {get;set;}
-        public int idade {get;set;}
+        public string idade {get;set;}
 
         public Pessoa()
         {
             
         }
-        public Pessoa(string nome, string cpf, int idade)
+        public Pessoa(string nome, string cpf, string idade)
         {
             this.nome = nome;
             this.cpf = cpf;

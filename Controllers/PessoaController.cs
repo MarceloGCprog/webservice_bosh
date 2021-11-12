@@ -5,81 +5,133 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using wsteste.Models;
+using wsteste.DAO;
 
 namespace wsteste.Controllers
 {
     [ApiController]
     [Route("[controller]")]
     public class PessoaController : ControllerBase
-    {
-        //postman
-        //localhost/WeatherForecast
-        //localhost/api/Values
-
-        static private List<Pessoa> pessoas;
+    {   
+        
+        public string server { get; set; }
+        public string bancoDados{ get; set; }
+        public string Table { get; set; }        
+        private PessoasDao PD;
+        
+        
         public PessoaController()
         {
-            if( pessoas == null )
-            {
-                pessoas = new List<Pessoa>();
-                CargaInicial();
-            }
+            server = "localhost";
+            bancoDados = "bancoDados";
+            Table = "dbo.Pessoas";
+            PD= new PessoasDao();
+            PD.conexaoBD(server,bancoDados);            
+                      
+            
         }
 
-        void CargaInicial()
-        {
-            pessoas.Add(new Pessoa("Vilmar","000",29));
-            pessoas.Add(new Pessoa("Mykaele","001",23));
-            pessoas.Add(new Pessoa("Antonella","002",1));
-            pessoas.Add(new Pessoa("Duda","003",2));
-        }
+        
 
         [HttpGet]
-        public List<Pessoa> getTodasPessoas()
+        public string DadosConexao()
         {
-            return pessoas;
+            
+            return $"Dados Predefinidos - Server {server} / Database: {bancoDados} / Table: {Table} ";
         }
+
+        [HttpGet("pessoas")]
+
+        public IActionResult getTodasPessoas(){
+            
+            try{
+                return Ok(PD.pesquisarTodasPessoas(Table));
+
+            }catch{
+                return BadRequest();
+
+            }           
+           
+        }
+        
         
         [HttpGet("byCPF/{cpf}")]
         public IActionResult getPessoaByCPF(string cpf)
         {
-            foreach( Pessoa p in pessoas )
+            try
             {
-                if( p.cpf == cpf )
-                    return Ok(p);
+                
+                    return Ok(PD.pesquisarPessoa(Table,cpf: cpf));
+            }catch{
+                return NotFound("Pessoa não encontrada");
             }
-            //Como retornar null?
-            return NotFound("Pessoa não encontrada");
+            
+            
         }
 
 
-        [HttpGet("byNome")]
-        public IActionResult getPessoaByNome([FromQuery(Name="name")] string nome)
+        [HttpGet("bynome/{nome}")]
+        public IActionResult getPessoaByNome(string nome)
         {
-            if( nome == null || nome == "" )
-                return BadRequest();
-            foreach( Pessoa p in pessoas )
+             try
             {
-                if( p.nome == nome )
-                    return Ok(p);
+                
+                return Ok(PD.pesquisarPessoa(Table, nome: nome));
+            }catch{
+                return NotFound("Pessoa não encontrada");
             }
-            return NotFound();
+            
+        }
+        
+        [HttpGet("byidade/{idade}")]
+        public IActionResult getPessoaByIdade(string idade)
+        {
+             try
+            {
+                
+                return Ok(PD.pesquisarPessoa(Table, idade: idade));
+            }catch{
+                return NotFound("Pessoa não encontrada");
+            }
+            
+        }
+
+         [HttpPost("cargainicial/{tabela}")]
+        public List<Pessoa> cargaInicial(string tabela)
+        {
+            
+            PD.cargaInicial(tabela);
+            
+            return PD.pesquisarTodasPessoas(Table);
+        }
+        
+        [HttpPost("inserirPessoa/{nome}/{cpf}/{idade}")]
+        public List<Pessoa> inserirPessoa(string nome, string cpf, string idade)
+        {
+            
+            PD.AdicionarPessoa("Pessoas",nome,cpf,idade);
+            
+            return PD.pesquisarTodasPessoas(Table);
+        }
+
+        [HttpPost("deletarPessoa/{nome}/{cpf}/{idade}")]
+        public List<Pessoa> deletarPessoa(string nome, string cpf, string idade)
+        {
+            
+            PD.DeletarPessoa("Pessoas",nome,cpf,idade);
+            
+            return PD.pesquisarTodasPessoas(Table);
+        }
+
+        [HttpPost("AltPessoaCpf/{nome}/{cpf}/{idade}")]
+        public List<Pessoa> UpdatePessoaCpf(string nome, string cpf, string idade)
+        {
+            
+            PD.AlterarPessoa("Pessoas",nome,cpf,idade);
+            
+            return PD.pesquisarTodasPessoas(Table);
         }
 
         
-        [HttpPost("{nome}/{cpf}/{idade}")]
-        public List<Pessoa> inserirPessoa(string nome, string cpf, int idade)
-        {
-            Pessoa p = new Pessoa(nome,cpf,idade);
-            pessoas.Add(p);
-            return pessoas;
-        }
-
-        [HttpPost]
-        public IActionResult inserirPessoaCompleta(Pessoa novaPessoa)
-        {
-            pessoas.Add(novaPessoa);
-            return Ok();
-        }
     }
 }

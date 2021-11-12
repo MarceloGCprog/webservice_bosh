@@ -3,6 +3,9 @@ using System.IO;
 using System.Text;
 using System.Data;
 using System.Data.SqlClient;
+using wsteste.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace wsteste.DAO{
 
@@ -18,7 +21,7 @@ namespace wsteste.DAO{
             String strconexao ="Server ="+server+";"+"Database="+database+"; Trusted_Connection=True";
             conexao = new SqlConnection(strconexao);
             conexao.Open();
-            //System.Console.WriteLine("Conexao aberta");  
+              
             } catch(SqlException e){
                  Console.WriteLine($"Erro SQL: {e}"); 
                  conexao.Close();
@@ -27,15 +30,74 @@ namespace wsteste.DAO{
         }
 
          public void closeconexaoBD(){
-            //String strconexao =Server =localhost; Database=hotel_idris; Trusted_Connection=True;";
+            
 
             
             conexao.Close();
             System.Console.WriteLine("Conexao Fechada"); 
         }
 
+        public void criarTabela(string table){
+            try{
+               
+               
+                if (conexao.State != ConnectionState.Open){
+                    conexao.Close();
+                    conexao.Open();}
+
+                SqlCommand comando1 = conexao.CreateCommand();
+                SqlTransaction  transaction;
+                transaction = conexao.BeginTransaction("Criar tabela");
+                comando1.Connection = conexao;
+                comando1.Transaction = transaction;
+
+                try{
+                    comando1.CommandText = $"if object_id({table}) is null begin create Table {table}(nome varchar(50),cpf varchar(11),idade varchar(3)) end ";                    
+                    comando1.ExecuteNonQuery();
+                    
+
+                    transaction.Commit();            
+                    
+                }catch (Exception ex)
+                {
+                    Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
+                    Console.WriteLine("  Message: {0}", ex.Message);
+
+            
+                    try
+                    {
+                     transaction.Rollback();
+                    }
+                    catch (Exception ex2)
+                    {
+                
+                    Console.WriteLine("Rollback Exception Type: {0}", ex2.GetType());
+                    Console.WriteLine("  Message: {0}", ex2.Message);
+                    }}                
+
+                
+
+            } catch(SqlException e){
+                System.Console.WriteLine("Tabela nao criada. Erro: " + e);
+            }
+
+        }
+
+        public void cargaInicial(string tabela){
+
+            if (pesquisarTodasPessoas(tabela).Any() == false){
+
+                AdicionarPessoa(tabela,"Vilmar","000","29");
+                AdicionarPessoa(tabela,"Mykaele","001","23");
+                AdicionarPessoa(tabela,"Antonella","002","1");
+                AdicionarPessoa(tabela,"Duda","003","2");      
+
+            }
+        }
+
         public void AdicionarPessoa(string tabela,string nome, string cpf, string idade){                   
                 
+                Pessoa pessoa = new Pessoa(nome,cpf,idade);
 
             try{
                
@@ -52,14 +114,14 @@ namespace wsteste.DAO{
 
                 try{
                     comando1.CommandText = $"Insert Into {tabela} (nome,cpf,idade) VALUES (@nome,@cpf,@idade)";
-                    comando1.Parameters.Add(new SqlParameter("@nome",nome));
-                    comando1.Parameters.Add(new SqlParameter("@cpf",cpf));
-                    comando1.Parameters.Add(new SqlParameter("@idade",idade));
+                    comando1.Parameters.Add(new SqlParameter("@nome",pessoa.nome));
+                    comando1.Parameters.Add(new SqlParameter("@cpf",pessoa.cpf));
+                    comando1.Parameters.Add(new SqlParameter("@idade",pessoa.idade));
                     comando1.ExecuteNonQuery();
                     
 
                     transaction.Commit();            
-                    //System.Console.WriteLine("Pessoa inserida com sucesso.");
+                    
                 }catch (Exception ex)
                 {
                     Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
@@ -85,10 +147,10 @@ namespace wsteste.DAO{
 
         }
 
-        public void pesquisarTodasPessoas(string tabela){
+        public List<Pessoa> pesquisarTodasPessoas(string tabela){
 
-            
-            try{                               
+            List<Pessoa> resultado = new List<Pessoa>();
+                                          
                
                 if (conexao.State != ConnectionState.Open){
                     conexao.Close();
@@ -104,31 +166,38 @@ namespace wsteste.DAO{
                 SqlDataReader leitor = comando1.ExecuteReader(CommandBehavior.CloseConnection);
 
                 if(leitor.HasRows){
-                    while(leitor.Read()){
-                
-                        System.Console.WriteLine($"nome:"+ leitor["nome"]+" cpf:"+ leitor["cpf"]+" idade:"+ leitor["idade"]);
-                         
-                } 
-                    leitor.Close();
+                    
 
-                }else{
+                    while(leitor.Read()){
+
+                        Pessoa p = new Pessoa((string)leitor["nome"],(string)leitor["cpf"],(string)leitor["idade"]);
+                
+                        resultado.Add(p);                         
+                    } 
+
+                leitor.Close();
+                closeconexaoBD();
+                return resultado;    
+                
+
+                }
+                else{
                     leitor.Close();
-                    System.Console.WriteLine("Tabela Vazia");
+                    closeconexaoBD();
+                    return resultado;
                     
                 }
-                closeconexaoBD(); 
+                
+                
             }
-            catch(SqlException e){
-                System.Console.WriteLine("Erro na leitura dos dados!"+ e);
-                closeconexaoBD();                 
-            }
-        }
-
-        public void pesquisarPessoa(string tabela, string nome="%",string cpf="%", string idade="%"){
-
             
-            try{                               
-               
+        
+
+        public List<Pessoa> pesquisarPessoa(string tabela, string nome="%",string cpf="%", string idade="%"){
+
+            List<Pessoa> resultado = new List<Pessoa>();
+            
+            
                 if (conexao.State != ConnectionState.Open){
                     conexao.Close();
                     conexao.Open();}               
@@ -138,36 +207,35 @@ namespace wsteste.DAO{
                 transaction = conexao.BeginTransaction("Selecionar Pessoa ");
                 comando1.Connection = conexao;
                 comando1.Transaction = transaction;
-
-                comando1.CommandText = $"select * from {tabela} where nome LIKE @nome and cpf LIKE @cpf and idade LIKE @idade";
+                comando1.CommandText = $"select * from {tabela} where cpf LIKE @cpf and  nome LIKE @nome and idade LIKE @idade";                
                 comando1.Parameters.Add(new SqlParameter("@nome",nome));
                 comando1.Parameters.Add(new SqlParameter("@cpf",cpf));
                 comando1.Parameters.Add(new SqlParameter("@idade",idade));
+                
 
                 SqlDataReader leitor = comando1.ExecuteReader(CommandBehavior.CloseConnection);
 
                 if(leitor.HasRows){
                     while(leitor.Read()){
                 
-                        System.Console.WriteLine($"nome:"+ leitor["nome"] +" cpf:"+ leitor["cpf"] +" idade:"+ leitor["idade"]);
+                        Pessoa p = new Pessoa((string)leitor["nome"],(string)leitor["cpf"],(string)leitor["idade"]);
+                
+                        resultado.Add(p);
                          
-                } 
-                    leitor.Close();
+                }                 
 
-                }else{
-                    leitor.Close();
-                    System.Console.WriteLine("Tabela Vazia");
                     
-                }
-                closeconexaoBD(); 
-            }
-            catch(SqlException e){
-                System.Console.WriteLine("Erro na leitura dos dados!"+ e);
-                closeconexaoBD();                 
-            }
-        }
 
-         public void DeletarPessoa(string tabela, string cpf){                   
+                } 
+                leitor.Close();
+                closeconexaoBD();
+                return resultado;
+                    
+                    
+                }           
+                
+                                
+         public void DeletarPessoa(string tabela, string nome,string cpf, string idade){                   
                 
 
             try{
@@ -184,13 +252,16 @@ namespace wsteste.DAO{
                 comando1.Transaction = transaction;
 
                 try{
-                    comando1.CommandText = $"Delete from {tabela} Where cpf= @cpf";        
-                    comando1.Parameters.Add(new SqlParameter("@cpf",cpf));                                     
+                    comando1.CommandText = $"Delete from {tabela} Where nome= @nome and cpf= @cpf and idade= @idade";        
+                    
+                    comando1.Parameters.Add(new SqlParameter("@nome",nome));
+                    comando1.Parameters.Add(new SqlParameter("@cpf",cpf));
+                    comando1.Parameters.Add(new SqlParameter("@idade",idade));                                     
                     comando1.ExecuteNonQuery();
                     
 
                     transaction.Commit();            
-                    //System.Console.WriteLine("Pessoa inserida com sucesso.");
+                    
                 }catch (Exception ex)
                 {
                     Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
@@ -216,7 +287,7 @@ namespace wsteste.DAO{
 
         }
 
-        public void AlterarPessoa(string tabela,string novoNome, string novaIdade, string cpf){                   
+        public void AlterarPessoa(string tabela,string nome,string cpf, string idade){                   
                 
 
             try{
@@ -235,13 +306,13 @@ namespace wsteste.DAO{
                 try{
                     comando1.CommandText = $"Update {tabela} Set nome= @novoNome, idade= @novaIdade  Where  cpf= @cpf";                  
                     comando1.Parameters.Add(new SqlParameter("@cpf",cpf));
-                    comando1.Parameters.Add(new SqlParameter("@novoNome",novoNome));                    
-                    comando1.Parameters.Add(new SqlParameter("@novaIdade",novaIdade));                    
+                    comando1.Parameters.Add(new SqlParameter("@novoNome",nome));                    
+                    comando1.Parameters.Add(new SqlParameter("@novaIdade",idade));                    
                     comando1.ExecuteNonQuery();
                     
 
                     transaction.Commit();            
-                    //System.Console.WriteLine("Pessoa inserida com sucesso.");
+                    
                 }catch (Exception ex)
                 {
                     Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
@@ -265,30 +336,11 @@ namespace wsteste.DAO{
                 System.Console.WriteLine("Instrucao não realizada" + e);
             }
 
-        }
-
-        
-        
-
-        //++++++++++++++++++++++++++++++++++++++++++++++++++
-       
-        static void Main(string[] args)
-        {
-            
-            bancodeDados bd = new bancodeDados();
-
-            bd.conexaoBD("localhost","Sexta");
-            
-            bd.pesquisarALuno("Aluno");
-
-            bd.closeconexaoBD();                   
-
-            System.Console.WriteLine("Fim do programa!!");
-            
-        }
+        }        
 
     }
 }
+
 
 
 
